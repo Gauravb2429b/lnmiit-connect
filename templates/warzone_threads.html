@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Warzone — The Pit</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#0b0b0f; --bg-card:#13131c; --bg-input:#1a1a24; --bg-hover:#1e1e2a;
+      --border:rgba(255,255,255,0.07); --accent:#6366f1;
+      --accent-g:rgba(99,102,241,0.15);
+      --text-1:#eeeef5; --text-2:#8888a8; --text-3:#44445a;
+      --red:#f87171; --green:#34d399;
+      --pit:#f59e0b; --pit-soft:rgba(245,158,11,0.12);
+      --r:14px;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      background:var(--bg); color:var(--text-1);
+      font-family:'DM Sans', sans-serif; -webkit-font-smoothing:antialiased;
+      min-height:100dvh;
+    }
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:radial-gradient(ellipse 50% 40% at 80% 5%, rgba(245,158,11,0.06) 0%, transparent 60%);
+    }
+
+    /* NAV */
+    .nav {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 16px;
+      background:rgba(11,11,15,0.92); backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+    }
+    .nav-left { display:flex; align-items:center; gap:10px; }
+    .back-btn {
+      width:32px; height:32px; border-radius:9px; border:1px solid var(--border);
+      background:transparent; color:var(--text-2); cursor:pointer;
+      display:flex; align-items:center; justify-content:center; font-size:16px;
+      text-decoration:none; transition:all 0.2s;
+    }
+    .back-btn:hover { background:var(--bg-hover); color:var(--text-1); }
+    .nav-title { font-size:15px; font-weight:600; }
+    .nav-sub   { font-size:11px; color:var(--text-3); font-family:'Space Mono',monospace; margin-top:1px; }
+    .new-btn {
+      padding:8px 16px; border-radius:10px; font-size:13px; font-weight:500;
+      background:var(--pit-soft); color:var(--pit);
+      border:1px solid rgba(245,158,11,0.25); cursor:pointer; transition:all 0.2s;
+    }
+    .new-btn:hover { background:rgba(245,158,11,0.2); }
+
+    /* PAGE */
+    .page { position:relative; z-index:1; max-width:640px; margin:0 auto; padding:16px 12px 80px; }
+
+    /* NEW POST FORM */
+    .compose-box {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:16px; padding:16px; margin-bottom:20px;
+      display:none;
+    }
+    .compose-box.open { display:block; }
+    .compose-title-input {
+      width:100%; background:var(--bg-input); border:1px solid var(--border);
+      color:var(--text-1); border-radius:10px; padding:10px 14px;
+      font-size:15px; font-weight:500; font-family:'DM Sans',sans-serif;
+      outline:none; margin-bottom:10px; transition:border-color 0.2s;
+    }
+    .compose-title-input:focus { border-color:rgba(245,158,11,0.35); }
+    .compose-title-input::placeholder { color:var(--text-3); }
+    .compose-body-input {
+      width:100%; background:var(--bg-input); border:1px solid var(--border);
+      color:var(--text-1); border-radius:10px; padding:10px 14px;
+      font-size:14px; font-family:'DM Sans',sans-serif;
+      outline:none; resize:none; min-height:80px; line-height:1.5;
+      transition:border-color 0.2s;
+    }
+    .compose-body-input:focus { border-color:rgba(245,158,11,0.35); }
+    .compose-body-input::placeholder { color:var(--text-3); }
+    .compose-actions {
+      display:flex; justify-content:flex-end; gap:8px; margin-top:10px;
+    }
+    .btn-cancel {
+      padding:7px 16px; border-radius:9px; font-size:13px;
+      background:transparent; border:1px solid var(--border);
+      color:var(--text-2); cursor:pointer; transition:all 0.2s;
+    }
+    .btn-cancel:hover { background:var(--bg-hover); color:var(--text-1); }
+    .btn-post {
+      padding:7px 20px; border-radius:9px; font-size:13px; font-weight:500;
+      background:var(--pit-soft); color:var(--pit);
+      border:1px solid rgba(245,158,11,0.3); cursor:pointer; transition:all 0.2s;
+    }
+    .btn-post:hover { background:rgba(245,158,11,0.2); }
+    .btn-post:disabled { opacity:0.4; cursor:not-allowed; }
+
+    /* THREAD CARDS */
+    .thread-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--r); margin-bottom:10px;
+      transition:border-color 0.2s;
+      overflow:hidden;
+    }
+    .thread-card:hover { border-color:rgba(255,255,255,0.11); }
+
+    .thread-main {
+      padding:14px 16px; cursor:pointer;
+    }
+    .thread-meta {
+      display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;
+    }
+    .thread-avatar {
+      width:22px; height:22px; border-radius:6px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:700; flex-shrink:0;
+    }
+    .thread-author {
+      font-size:12px; font-weight:600; font-family:'Space Mono',monospace;
+    }
+    .thread-time { font-size:11px; color:var(--text-3); }
+    .expiry-badge {
+      font-size:10px; padding:2px 7px; border-radius:20px;
+      font-family:'Space Mono',monospace; margin-left:auto;
+    }
+    .expiry-badge.urgent { background:rgba(248,113,113,0.12); color:#f87171; border:1px solid rgba(248,113,113,0.2); }
+    .expiry-badge.soon   { background:rgba(251,191,36,0.12);  color:#fbbf24; border:1px solid rgba(251,191,36,0.2); }
+    .expiry-badge.ok     { background:rgba(52,211,153,0.1);   color:#34d399; border:1px solid rgba(52,211,153,0.2); }
+
+    .thread-title {
+      font-size:16px; font-weight:600; line-height:1.35; margin-bottom:6px;
+    }
+    .thread-body {
+      font-size:13px; color:var(--text-2); line-height:1.55;
+      display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+    }
+    .thread-footer {
+      display:flex; align-items:center; gap:16px; margin-top:12px; padding-top:12px;
+      border-top:1px solid var(--border);
+    }
+    .thread-action {
+      display:flex; align-items:center; gap:5px;
+      font-size:12px; color:var(--text-2);
+      cursor:pointer; transition:color 0.2s; background:none; border:none; padding:0;
+    }
+    .thread-action:hover { color:var(--text-1); }
+    .thread-action.voted { color:var(--pit); }
+    .vote-count { font-family:'Space Mono',monospace; font-size:12px; }
+
+    /* REPLIES */
+    .replies-section {
+      border-top:1px solid var(--border);
+      background:rgba(0,0,0,0.2);
+      padding:12px 16px;
+      display:none;
+    }
+    .replies-section.open { display:block; }
+
+    .reply-card {
+      display:flex; gap:10px; padding:8px 0;
+      border-bottom:1px solid var(--border);
+    }
+    .reply-card:last-child { border-bottom:none; }
+    .reply-avatar {
+      width:26px; height:26px; border-radius:8px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:700; margin-top:2px;
+    }
+    .reply-body { flex:1; min-width:0; }
+    .reply-meta { display:flex; gap:8px; align-items:baseline; margin-bottom:3px; }
+    .reply-name { font-size:11px; font-weight:600; font-family:'Space Mono',monospace; }
+    .reply-time { font-size:10px; color:var(--text-3); }
+    .reply-text { font-size:13px; line-height:1.5; word-break:break-word; }
+
+    .reply-input-row {
+      display:flex; gap:8px; margin-top:12px; align-items:center;
+    }
+    .reply-input {
+      flex:1; background:var(--bg-input); border:1px solid var(--border);
+      color:var(--text-1); border-radius:10px; padding:8px 12px;
+      font-size:13px; font-family:'DM Sans',sans-serif;
+      outline:none; transition:border-color 0.2s;
+    }
+    .reply-input:focus { border-color:rgba(245,158,11,0.3); }
+    .reply-input::placeholder { color:var(--text-3); }
+    .btn-reply {
+      padding:8px 14px; border-radius:9px; font-size:12px; font-weight:500;
+      background:var(--pit-soft); color:var(--pit);
+      border:1px solid rgba(245,158,11,0.25); cursor:pointer; transition:all 0.2s;
+    }
+    .btn-reply:hover { background:rgba(245,158,11,0.2); }
+
+    .empty-state {
+      text-align:center; padding:60px 20px; color:var(--text-3); font-size:14px;
+    }
+    .empty-icon { font-size:36px; margin-bottom:12px; }
+
+    .loading { text-align:center; padding:40px; color:var(--text-3); font-size:14px; }
+
+    .sort-bar {
+      display:flex; gap:8px; margin-bottom:16px; align-items:center;
+    }
+    .sort-lbl { font-size:11px; color:var(--text-3); font-family:'Space Mono',monospace; margin-right:4px; }
+    .sort-btn {
+      font-size:12px; padding:4px 10px; border-radius:7px;
+      background:transparent; border:1px solid var(--border);
+      color:var(--text-2); cursor:pointer; transition:all 0.2s;
+    }
+    .sort-btn.active { background:var(--bg-hover); color:var(--text-1); border-color:rgba(255,255,255,0.12); }
+
+    .toast {
+      position:fixed; bottom:24px; left:50%;
+      transform:translateX(-50%) translateY(20px);
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:10px; padding:10px 20px;
+      font-size:13px; z-index:999;
+      opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="warzone.html" class="back-btn">←</a>
+    <div>
+      <div class="nav-title">🔥 The Pit</div>
+      <div class="nav-sub" id="threadSub">Loading threads...</div>
+    </div>
+  </div>
+  <button class="new-btn" onclick="toggleCompose()">+ New thread</button>
+</nav>
+
+<div class="page">
+
+  <!-- Compose box -->
+  <div class="compose-box" id="composeBox">
+    <input type="text" class="compose-title-input" id="postTitle" placeholder="What's the hot take? (title)" maxlength="150"/>
+    <textarea class="compose-body-input" id="postBody" placeholder="Elaborate... (optional)" maxlength="1000"></textarea>
+    
+    <!-- Poll section -->
+    <div id="pollSection" style="display:none;margin-top:10px;background:var(--bg-input);border-radius:10px;padding:12px;">
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:8px;font-weight:500;">📊 Poll question</div>
+      <input type="text" id="pollQuestion" placeholder="Ask a question..." maxlength="100" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text-1);outline:none;margin-bottom:8px;font-family:'DM Sans',sans-serif;"/>
+      <div id="pollOptions">
+        <input type="text" class="poll-opt" placeholder="Option 1" maxlength="50" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text-1);outline:none;margin-bottom:6px;font-family:'DM Sans',sans-serif;"/>
+        <input type="text" class="poll-opt" placeholder="Option 2" maxlength="50" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text-1);outline:none;margin-bottom:6px;font-family:'DM Sans',sans-serif;"/>
+        <input type="text" class="poll-opt" placeholder="Option 3 (optional)" maxlength="50" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text-1);outline:none;margin-bottom:6px;font-family:'DM Sans',sans-serif;"/>
+        <input type="text" class="poll-opt" placeholder="Option 4 (optional)" maxlength="50" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text-1);outline:none;font-family:'DM Sans',sans-serif;"/>
+      </div>
+    </div>
+
+    <div class="compose-actions">
+      <button class="btn-cancel" onclick="toggleCompose()">Cancel</button>
+      <button class="btn-cancel" onclick="togglePoll()" id="pollToggleBtn" style="color:var(--pit);">+ Add Poll</button>
+      <button class="btn-post" id="postBtn" onclick="submitPost()">🔥 Post it</button>
+    </div>
+  </div>
+
+  <!-- Sort bar -->
+  <div class="sort-bar">
+    <span class="sort-lbl">Sort:</span>
+    <button class="sort-btn active" id="sort-hot"  onclick="setSort('hot')">🔥 Hot</button>
+    <button class="sort-btn"        id="sort-new"  onclick="setSort('new')">✨ New</button>
+    <button class="sort-btn"        id="sort-top"  onclick="setSort('top')">⬆ Top</button>
+  </div>
+
+  <div id="threadList"><div class="loading">Loading threads...</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let myAnonName = '';
+  let myUserId   = null;
+  let isAdmin    = false;
+  let currentSort = 'hot';
+  let votedThreads = new Set(JSON.parse(localStorage.getItem('wz_votes') || '[]'));
+  let showPoll = false;
+
+  const YEAR_COLORS = ['', '#34d399', '#fbbf24', '#f87171', '#eeeef5'];
+  function colorFor(yearOrName) {
+    if (typeof yearOrName === 'number') return YEAR_COLORS[yearOrName] || '#a5b4fc';
+    let h = 0;
+    for (let i = 0; i < yearOrName.length; i++) h = yearOrName.charCodeAt(i) + ((h << 5) - h);
+    return ['#6366f1','#f472b6','#34d399','#fbbf24','#60a5fa','#a78bfa','#f87171','#fb923c'][Math.abs(h) % 8];
+  }
+
+  function timeAgo(iso) {
+    const d = new Date(iso.replace(' ', 'T') + 'Z');
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60)  return 'just now';
+    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+    return Math.floor(diff/3600) + 'h ago';
+  }
+
+  function expiryLabel(iso) {
+    const d = new Date(iso.replace(' ', 'T') + 'Z');
+    const remaining = (d.getTime() - Date.now()) / 3600000;
+    if (remaining < 2)  return { text: '< 2h left', cls:'urgent' };
+    if (remaining < 6)  return { text: Math.floor(remaining) + 'h left', cls:'soon' };
+    return { text: Math.floor(remaining) + 'h left', cls:'ok' };
+  }
+
+  function escHtml(t) {
+    return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function init() {
+    const r = await fetch('/api/me', { credentials:'include' });
+    const d = await r.json();
+    if (d.error) { window.location.href = 'index.html'; return; }
+    myAnonName = d.anon_username || d.name;
+    myUserId   = d.id;
+    isAdmin    = d.role === 'admin';
+    loadThreads();
+    setInterval(loadThreads, 15000);
+  }
+
+  async function loadThreads() {
+    try {
+      const r = await fetch(`/api/warzone/threads?sort=${currentSort}`, { credentials:'include' });
+      const threads = await r.json();
+      renderThreads(threads);
+      document.getElementById('threadSub').textContent = threads.length + ' active threads';
+    } catch(e) {
+      document.getElementById('threadList').innerHTML =
+        '<div class="loading">Failed to load. Retry?</div>';
+    }
+  }
+
+  function renderThreads(list) {
+    const el = document.getElementById('threadList');
+    if (!list.length) {
+      el.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">🔥</div>
+        <div>No threads yet. Drop a hot take!</div>
+      </div>`;
+      return;
+    }
+    el.innerHTML = list.map(t => {
+      const color = colorFor(t.year || 0);
+      const exp   = expiryLabel(t.expires_at);
+      const voted = votedThreads.has(t.id);
+      return `
+      <div class="thread-card" id="thread-${t.id}">
+        <div class="thread-main" onclick="toggleReplies(${t.id})">
+          <div class="thread-meta">
+            <div class="thread-avatar" style="background:${color}22;color:${color};border:1px solid ${color}33">
+              ${escHtml(t.anon_username.charAt(0).toUpperCase())}
+            </div>
+            <span class="thread-author" style="color:${color}">@${escHtml(t.anon_username)}</span>
+            <span class="thread-time">${timeAgo(t.created_at)}</span>
+            <span class="expiry-badge ${exp.cls}">${exp.text}</span>
+            ${isAdmin ? `<button class="thread-action" style="color:var(--red);margin-left:auto;" onclick="adminDeleteThread(event,${t.id})">🗑 Delete</button>` : ''}
+          </div>
+          <div class="thread-title">${escHtml(t.title)}</div>
+          ${t.body ? `<div class="thread-body">${escHtml(t.body)}</div>` : ''}
+          <div class="thread-footer">
+            <button class="thread-action ${voted?'voted':''}" onclick="vote(event,${t.id})">
+              🔥 <span class="vote-count" id="votes-${t.id}">${t.votes}</span>
+            </button>
+            <button class="thread-action" onclick="toggleReplies(${t.id},event)">
+              💬 <span id="rcount-${t.id}">${t.reply_count}</span> replies
+            </button>
+          </div>
+        </div>
+        <div id="poll-${t.id}" style="padding:0 16px;"></div>
+        <div class="replies-section" id="replies-${t.id}">
+          <div id="reply-list-${t.id}"></div>
+          <div class="reply-input-row">
+            <input type="text" class="reply-input" id="reply-input-${t.id}"
+              placeholder="Reply anonymously..." maxlength="500"
+              onkeydown="if(event.key==='Enter'){submitReply(${t.id})}"
+            />
+            <button class="btn-reply" onclick="submitReply(${t.id})">Reply</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function togglePoll() {
+    showPoll = !showPoll;
+    document.getElementById('pollSection').style.display = showPoll ? 'block' : 'none';
+    document.getElementById('pollToggleBtn').textContent = showPoll ? '× Remove Poll' : '+ Add Poll';
+  }
+
+  async function adminDeleteThread(e, threadId) {
+    e.stopPropagation();
+    if (!confirm('Delete this thread?')) return;
+    const r = await fetch(`/api/warzone/threads/${threadId}/delete`, { method:'POST', credentials:'include' });
+    const d = await r.json();
+    if (d.message) { showToast('Thread deleted'); loadThreads(); }
+    else showToast(d.error || 'Error');
+  }
+
+  async function loadPoll(threadId) {
+    const el = document.getElementById('poll-' + threadId);
+    if (!el) return;
+    const r = await fetch(`/api/warzone/threads/${threadId}/poll`, { credentials:'include' });
+    const poll = await r.json();
+    if (!poll) return;
+    const total = poll.options.reduce((s, o) => s + o.votes, 0);
+    el.innerHTML = `
+      <div style="padding:12px 0;border-top:1px solid var(--border);">
+        <div style="font-size:13px;font-weight:500;margin-bottom:10px;">📊 ${escHtml(poll.question)}</div>
+        ${poll.options.map(o => {
+          const pct = total ? Math.round(o.votes / total * 100) : 0;
+          const voted = poll.voted_option === o.id;
+          return `<div onclick="votePoll(${threadId},${poll.id},${o.id})" style="cursor:${poll.voted_option ? 'default' : 'pointer'};margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">
+              <span style="${voted ? 'color:var(--pit);font-weight:600;' : ''}">${escHtml(o.option)}${voted ? ' ✓' : ''}</span>
+              <span style="color:var(--text-3);">${pct}% (${o.votes})</span>
+            </div>
+            <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:${voted ? 'var(--pit)' : 'var(--accent)'};border-radius:4px;transition:width 0.3s;"></div>
+            </div>
+          </div>`;
+        }).join('')}
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px;">${total} vote${total !== 1 ? 's' : ''}</div>
+      </div>`;
+  }
+
+  async function votePoll(threadId, pollId, optionId) {
+    const r = await fetch(`/api/warzone/threads/${threadId}/poll/vote`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ option_id: optionId })
+    });
+    const d = await r.json();
+    if (d.error) { showToast(d.error); return; }
+    loadPoll(threadId);
+  }
+
+  async function toggleReplies(threadId, e) {
+    if (e) e.stopPropagation();
+    const sec = document.getElementById('replies-' + threadId);
+    if (!sec) return;
+    const isOpen = sec.classList.contains('open');
+    if (isOpen) { sec.classList.remove('open'); return; }
+    sec.classList.add('open');
+    await loadReplies(threadId);
+    await loadPoll(threadId);
+  }
+
+  async function loadReplies(threadId) {
+    const el = document.getElementById('reply-list-' + threadId);
+    el.innerHTML = '<div style="padding:8px 0;font-size:12px;color:var(--text-3)">Loading...</div>';
+    try {
+      const r = await fetch(`/api/warzone/threads/${threadId}/replies`, { credentials:'include' });
+      const replies = await r.json();
+      if (!replies.length) {
+        el.innerHTML = '<div style="padding:8px 0;font-size:12px;color:var(--text-3)">No replies yet. Be first!</div>';
+        return;
+      }
+      el.innerHTML = replies.map(r => {
+        const c = colorFor(r.anon_username);
+        return `<div class="reply-card">
+          <div class="reply-avatar" style="background:${c}22;color:${c};border:1px solid ${c}33">
+            ${escHtml(r.anon_username.charAt(0).toUpperCase())}
+          </div>
+          <div class="reply-body">
+            <div class="reply-meta">
+              <span class="reply-name" style="color:${c}">@${escHtml(r.anon_username)}</span>
+              <span class="reply-time">${timeAgo(r.created_at)}</span>
+            </div>
+            <div class="reply-text">${escHtml(r.message)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      el.innerHTML = '<div style="padding:8px 0;font-size:12px;color:var(--red)">Failed to load.</div>';
+    }
+  }
+
+  async function submitReply(threadId) {
+    const input = document.getElementById('reply-input-' + threadId);
+    const text = input.value.trim();
+    if (!text) return;
+    try {
+      const r = await fetch(`/api/warzone/threads/${threadId}/replies`, {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ message: text })
+      });
+      const d = await r.json();
+      if (d.error) { showToast('❌ ' + d.error); return; }
+      input.value = '';
+      await loadReplies(threadId);
+      // update reply count
+      const rc = document.getElementById('rcount-' + threadId);
+      if (rc) rc.textContent = parseInt(rc.textContent || 0) + 1;
+      showToast('Reply posted! 💬');
+    } catch(e) { showToast('Failed to reply'); }
+  }
+
+  async function vote(e, threadId) {
+    e.stopPropagation();
+    if (votedThreads.has(threadId)) { showToast('Already voted!'); return; }
+    try {
+      const r = await fetch(`/api/warzone/threads/${threadId}/vote`, {
+        method:'POST', credentials:'include'
+      });
+      const d = await r.json();
+      if (d.error) { showToast('❌ ' + d.error); return; }
+      votedThreads.add(threadId);
+      localStorage.setItem('wz_votes', JSON.stringify([...votedThreads]));
+      const vc = document.getElementById('votes-' + threadId);
+      if (vc) vc.textContent = d.votes;
+      e.currentTarget.classList.add('voted');
+      showToast('🔥 Voted!');
+    } catch(e) { showToast('Failed to vote'); }
+  }
+
+  function toggleCompose() {
+    const box = document.getElementById('composeBox');
+    box.classList.toggle('open');
+    if (box.classList.contains('open')) document.getElementById('postTitle').focus();
+  }
+
+  async function submitPost() {
+    const title = document.getElementById('postTitle').value.trim();
+    const body  = document.getElementById('postBody').value.trim();
+    if (!title) { showToast('Add a title!'); return; }
+
+    let poll = null;
+    if (showPoll) {
+      const question = document.getElementById('pollQuestion').value.trim();
+      const opts = Array.from(document.querySelectorAll('.poll-opt')).map(i => i.value.trim()).filter(v => v);
+      if (question && opts.length >= 2) poll = { question, options: opts };
+    }
+
+    const btn = document.getElementById('postBtn');
+    btn.disabled = true; btn.textContent = 'Posting...';
+    try {
+      const r = await fetch('/api/warzone/threads', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ title, body, poll })
+      });
+      const d = await r.json();
+      if (d.error) { showToast('❌ ' + d.error); return; }
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postBody').value  = '';
+      document.getElementById('pollQuestion').value = '';
+      document.querySelectorAll('.poll-opt').forEach(i => i.value = '');
+      if (showPoll) togglePoll();
+      document.getElementById('composeBox').classList.remove('open');
+      showToast('Thread posted! 🔥');
+      await loadThreads();
+    } catch(e) { showToast('Failed to post'); }
+    finally { btn.disabled = false; btn.textContent = '🔥 Post it'; }
+  }
+
+  function setSort(s) {
+    currentSort = s;
+    ['hot','new','top'].forEach(x => {
+      document.getElementById('sort-'+x).classList.toggle('active', x===s);
+    });
+    loadThreads();
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  init();
+</script>
+</body>
+</html>

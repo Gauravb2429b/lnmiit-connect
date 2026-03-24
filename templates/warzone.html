@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LNMIIT Connect — Warzone</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#0b0b0f; --bg-card:#13131c; --bg-hover:#1e1e2a;
+      --border:rgba(255,255,255,0.07); --accent:#6366f1;
+      --accent-g:rgba(99,102,241,0.2); --accent2:#a5b4fc;
+      --text-1:#eeeef5; --text-2:#8888a8; --text-3:#44445a;
+      --red:#f87171; --amber:#fbbf24; --green:#34d399;
+      --warzone:#ff4444; --warzone-g:rgba(255,68,68,0.15);
+      --pit:#f59e0b; --pit-g:rgba(245,158,11,0.15);
+      --r:14px;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      background:var(--bg); color:var(--text-1);
+      font-family:'DM Sans', sans-serif;
+      -webkit-font-smoothing:antialiased;
+      min-height:100dvh;
+      overflow-x:hidden;
+    }
+
+    /* animated background */
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 0%, rgba(255,68,68,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 100%, rgba(99,102,241,0.08) 0%, transparent 60%);
+    }
+
+    .nav {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 20px;
+      background:rgba(11,11,15,0.88);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+    }
+    .nav-logo { display:flex; align-items:center; gap:9px; }
+    .nav-icon {
+      width:34px; height:34px;
+      background:linear-gradient(135deg,#f87171,#ff4444);
+      border-radius:10px; display:flex; align-items:center;
+      justify-content:center; font-size:16px;
+    }
+    .nav-name { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; }
+    .nav-badge {
+      font-size:10px; padding:2px 8px; border-radius:20px;
+      background:rgba(255,68,68,0.15); color:#ff7070;
+      border:1px solid rgba(255,68,68,0.3); margin-left:8px;
+    }
+    .back-btn {
+      font-size:12px; padding:6px 14px; border-radius:8px;
+      background:transparent; border:1px solid var(--border);
+      color:var(--text-2); cursor:pointer; transition:all 0.2s; text-decoration:none;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .back-btn:hover { background:var(--bg-hover); color:var(--text-1); }
+
+    .hero {
+      position:relative; z-index:1;
+      text-align:center; padding:60px 20px 20px;
+    }
+    .hero-label {
+      font-size:11px; letter-spacing:0.2em; text-transform:uppercase;
+      color:var(--text-3); margin-bottom:16px;
+      font-family:'Space Mono', monospace;
+    }
+    .hero-title {
+      font-family:'Bebas Neue', sans-serif;
+      font-size:clamp(64px, 14vw, 120px);
+      line-height:0.9;
+      background:linear-gradient(135deg, #ff6b6b 0%, #ff4444 40%, #fbbf24 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      background-clip:text;
+      letter-spacing:0.02em;
+      margin-bottom:16px;
+    }
+    .hero-sub {
+      font-size:15px; color:var(--text-2); max-width:400px;
+      margin:0 auto 48px; line-height:1.6;
+    }
+    .hero-sub strong { color:var(--text-1); }
+
+    /* warning banner */
+    .warning-strip {
+      position:relative; z-index:1;
+      margin:0 auto 48px; max-width:480px;
+      background:rgba(255,68,68,0.06);
+      border:1px solid rgba(255,68,68,0.15);
+      border-radius:10px; padding:10px 16px;
+      font-size:12px; color:#ff9090;
+      display:flex; align-items:center; gap:10px;
+    }
+
+    /* cards */
+    .cards {
+      position:relative; z-index:1;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:16px; max-width:680px; margin:0 auto;
+      padding:0 16px 80px;
+    }
+    @media(max-width:520px) { .cards { grid-template-columns:1fr; } }
+
+    .mode-card {
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:20px; padding:28px 24px;
+      cursor:pointer; transition:all 0.3s;
+      text-decoration:none; color:inherit;
+      display:block;
+      position:relative; overflow:hidden;
+    }
+    .mode-card::before {
+      content:''; position:absolute; inset:0; opacity:0; transition:opacity 0.3s;
+    }
+    .mode-card.live::before  { background:radial-gradient(ellipse at 30% 20%, rgba(255,68,68,0.12), transparent 70%); }
+    .mode-card.thread::before{ background:radial-gradient(ellipse at 30% 20%, rgba(245,158,11,0.12), transparent 70%); }
+    .mode-card:hover { transform:translateY(-4px); border-color:rgba(255,255,255,0.12); }
+    .mode-card:hover::before { opacity:1; }
+    .mode-card.live:hover  { border-color:rgba(255,68,68,0.3); box-shadow:0 8px 40px rgba(255,68,68,0.1); }
+    .mode-card.thread:hover{ border-color:rgba(245,158,11,0.3); box-shadow:0 8px 40px rgba(245,158,11,0.1); }
+
+    .card-icon {
+      width:52px; height:52px; border-radius:16px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:24px; margin-bottom:20px;
+    }
+    .live .card-icon   { background:rgba(255,68,68,0.12); border:1px solid rgba(255,68,68,0.2); }
+    .thread .card-icon { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.2); }
+
+    .card-tag {
+      font-size:10px; font-family:'Space Mono',monospace;
+      letter-spacing:0.1em; text-transform:uppercase;
+      margin-bottom:8px;
+    }
+    .live   .card-tag { color:#ff7070; }
+    .thread .card-tag { color:#fbbf24; }
+
+    .card-title {
+      font-size:22px; font-weight:600; margin-bottom:8px; line-height:1.2;
+    }
+    .card-desc {
+      font-size:13px; color:var(--text-2); line-height:1.6; margin-bottom:20px;
+    }
+    .card-cta {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:13px; font-weight:500; padding:8px 16px;
+      border-radius:10px; transition:all 0.2s;
+    }
+    .live   .card-cta { background:rgba(255,68,68,0.12); color:#ff7070; border:1px solid rgba(255,68,68,0.2); }
+    .thread .card-cta { background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(245,158,11,0.2); }
+    .mode-card:hover .card-cta { opacity:0.85; }
+
+    .card-stats {
+      display:flex; gap:16px; margin-top:16px; padding-top:16px;
+      border-top:1px solid var(--border);
+    }
+    .stat { font-size:11px; color:var(--text-3); }
+    .stat strong { color:var(--text-2); display:block; font-size:16px; font-family:'Space Mono',monospace; }
+
+    /* pulse dot */
+    .pulse-dot {
+      display:inline-block; width:7px; height:7px;
+      border-radius:50%; background:#ff4444;
+      animation:pulse 1.5s infinite;
+      vertical-align:middle; margin-right:4px;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.4; transform:scale(1.3); }
+    }
+
+    .anon-notice {
+      position:relative; z-index:1;
+      text-align:center; font-size:12px; color:var(--text-3);
+      padding-bottom:24px;
+    }
+    .anon-notice span { color:var(--accent2); }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-icon">⚔️</div>
+    <span class="nav-name">LNMIIT Connect</span>
+    <span class="nav-badge">Warzone</span>
+  </div>
+  <a href="dashboard.html" class="back-btn">⬅ Back</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-label">Anonymous Campus Space</div>
+  <div class="hero-title">Warzone</div>
+  <div class="hero-sub">
+    Your thoughts. Your rules. <strong>Fully anonymous.</strong><br>
+    Say what you actually think.
+  </div>
+  <div class="warning-strip">
+    ⚠️ All content is anonymous and auto-deletes. Be bold, not cruel. Zero tolerance for hate.
+  </div>
+</div>
+
+<div class="cards">
+
+  <!-- Live Chat -->
+  <a class="mode-card live" href="warzone_chat.html">
+    <div class="card-icon">⚡</div>
+    <div class="card-tag"><span class="pulse-dot"></span>Live</div>
+    <div class="card-title">Enter Warzone</div>
+    <div class="card-desc">
+      Real-time anonymous chat. Fast. Raw. Unfiltered campus conversation happening right now.
+    </div>
+    <div class="card-cta">Enter chat →</div>
+    <div class="card-stats">
+      <div class="stat"><strong id="liveCount">—</strong>online now</div>
+      <div class="stat"><strong id="msgCount">—</strong>messages today</div>
+    </div>
+  </a>
+
+  <!-- Threads -->
+  <a class="mode-card thread" href="warzone_threads.html">
+    <div class="card-icon">🔥</div>
+    <div class="card-tag">The Pit</div>
+    <div class="card-title">Start a Thread</div>
+    <div class="card-desc">
+      Reddit-style anonymous threads. Post a take, get roasted or praised. Threads die in 12 hours.
+    </div>
+    <div class="card-cta">Browse threads →</div>
+    <div class="card-stats">
+      <div class="stat"><strong id="threadCount">—</strong>active threads</div>
+      <div class="stat"><strong id="replyCount">—</strong>replies today</div>
+    </div>
+  </a>
+
+</div>
+
+<div class="anon-notice">
+  You appear as <span id="anonName">@anonymous</span> in Warzone
+</div>
+
+<script>
+  async function loadStats() {
+    try {
+      const r = await fetch('/api/warzone/stats', { credentials:'include' });
+      const d = await r.json();
+      if (d.live_users   !== undefined) document.getElementById('liveCount').textContent   = d.live_users;
+      if (d.msgs_today   !== undefined) document.getElementById('msgCount').textContent    = d.msgs_today;
+      if (d.active_threads!== undefined) document.getElementById('threadCount').textContent = d.active_threads;
+      if (d.replies_today !== undefined) document.getElementById('replyCount').textContent  = d.replies_today;
+    } catch(e) {}
+  }
+
+  async function loadMe() {
+    try {
+      const r = await fetch('/api/me', { credentials:'include' });
+      const d = await r.json();
+      if (d.anon_username) {
+        document.getElementById('anonName').textContent = '@' + d.anon_username;
+      }
+      if (d.error) window.location.href = '/page1/index.html';
+    } catch(e) {}
+  }
+
+  loadMe();
+  loadStats();
+</script>
+</body>
+</html>

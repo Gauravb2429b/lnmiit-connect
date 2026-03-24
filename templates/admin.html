@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LNMIIT Connect — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#0b0b0f; --bg-card:#13131c; --bg-input:#1a1a24; --bg-hover:#1e1e2a;
+      --border:rgba(255,255,255,0.07); --accent:#6366f1; --accent-g:rgba(99,102,241,0.2);
+      --accent2:#a5b4fc; --text-1:#eeeef5; --text-2:#8888a8; --text-3:#44445a;
+      --green:#34d399; --amber:#fbbf24; --red:#f87171; --r:14px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text-1);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;min-height:100dvh;}
+    body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:radial-gradient(ellipse 50% 40% at 15% 5%,rgba(99,102,241,0.1) 0%,transparent 70%);}
+
+    /* LOGIN SCREEN */
+    .login-wrap{position:relative;z-index:1;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .login-card{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:32px 28px;width:100%;max-width:360px;}
+    .login-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--accent),#a78bfa);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px;}
+    .login-title{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;margin-bottom:4px;}
+    .login-sub{font-size:13px;color:var(--text-2);margin-bottom:24px;}
+    .field-label{font-size:12px;color:var(--text-2);margin-bottom:5px;}
+    .field-input{width:100%;background:var(--bg-input);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--text-1);outline:none;font-family:inherit;margin-bottom:14px;transition:border-color 0.2s;}
+    .field-input:focus{border-color:rgba(99,102,241,0.5);}
+    .btn-primary{width:100%;padding:12px;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:opacity 0.2s;font-family:inherit;}
+    .btn-primary:hover{opacity:0.9;}
+    .err-msg{font-size:12px;color:var(--red);margin-top:8px;display:none;}
+
+    /* MAIN PANEL */
+    .nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(11,11,15,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+    .nav-logo{display:flex;align-items:center;gap:9px;}
+    .nav-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#a78bfa);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .nav-name{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+    .nav-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.2);margin-left:8px;}
+    .btn-logout{font-size:12px;padding:6px 14px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text-2);cursor:pointer;transition:all 0.2s;}
+    .btn-logout:hover{background:var(--bg-hover);color:var(--text-1);}
+    .btn-warzone{font-size:12px;padding:6px 14px;border-radius:8px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.25);color:#ff7070;cursor:pointer;transition:all 0.2s;}
+    .btn-warzone:hover{background:rgba(255,68,68,0.2);}
+
+    .page{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:24px 16px 60px;}
+
+    .section-title{font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+    .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+    /* ASSIGN FORM */
+    .assign-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:28px;}
+    .assign-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+    .search-wrap{position:relative;}
+    .search-results{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;z-index:50;overflow:hidden;max-height:200px;overflow-y:auto;}
+    .search-results.show{display:block;}
+    .sr-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;}
+    .sr-item:last-child{border-bottom:none;}
+    .sr-item:hover{background:var(--bg-hover);}
+    .sr-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+    .sr-name{font-size:13px;font-weight:500;}
+    .sr-email{font-size:11px;color:var(--text-3);}
+    .selected-chip{display:none;align-items:center;gap:8px;background:var(--accent-g);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:7px 12px;font-size:13px;margin-bottom:12px;}
+    .selected-chip.show{display:flex;}
+    .chip-clear{cursor:pointer;color:var(--text-3);font-size:16px;margin-left:auto;}
+    select.field-input{cursor:pointer;}
+    .btn-assign{width:100%;padding:11px;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:opacity 0.2s;font-family:inherit;}
+    .btn-assign:hover{opacity:0.9;}
+    .btn-assign:disabled{opacity:0.4;cursor:not-allowed;}
+
+    /* CURRENT COORDINATORS */
+    .coord-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+    .coord-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+    .coord-info{flex:1;min-width:0;}
+    .coord-name{font-size:14px;font-weight:500;}
+    .coord-email{font-size:12px;color:var(--text-3);margin-top:1px;}
+    .coord-club{font-size:11px;margin-top:3px;}
+    .club-pill{display:inline-block;padding:2px 8px;border-radius:20px;background:var(--accent-g);color:var(--accent2);border:1px solid rgba(99,102,241,0.2);font-size:10px;}
+    .btn-remove{padding:5px 12px;border-radius:8px;font-size:11px;font-weight:500;background:transparent;color:var(--text-3);border:1px solid var(--border);cursor:pointer;transition:all 0.2s;flex-shrink:0;}
+    .btn-remove:hover{background:rgba(248,113,113,0.1);color:var(--red);border-color:rgba(248,113,113,0.2);}
+
+    .empty-state{text-align:center;padding:30px;color:var(--text-3);font-size:14px;}
+
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;}
+    .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;}
+    .stat-num{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;}
+    .stat-lbl{font-size:11px;color:var(--text-3);margin-top:4px;}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-card">
+    <div class="login-icon">🔑</div>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-sub">LNMIIT Connect — restricted access</div>
+    <div class="field-label">Email</div>
+    <input class="field-input" id="adminEmail" type="email" placeholder="your email" autocomplete="off"/>
+    <div class="field-label">Password</div>
+    <input class="field-input" id="adminPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn-primary" onclick="doLogin()">Login</button>
+    <div class="err-msg" id="loginErr">Wrong email or password</div>
+  </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div id="mainPanel" style="display:none;">
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="nav-icon">🔗</div>
+      <span class="nav-name">LNMIIT Connect</span>
+      <span class="nav-badge">Admin</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="btn-warzone" onclick="window.location.href='/warzone.html'">⚔️ Warzone Monitor</button>
+      <button class="btn-logout" onclick="doLogout()">Log out</button>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="statStudents">—</div><div class="stat-lbl">Students</div></div>
+      <div class="stat-card"><div class="stat-num" id="statCoords">—</div><div class="stat-lbl">Coordinators</div></div>
+      <div class="stat-card"><div class="stat-num">34</div><div class="stat-lbl">Total clubs</div></div>
+    </div>
+
+    <!-- ASSIGN -->
+    <div class="section-title">Assign coordinator</div>
+    <div class="assign-card">
+      <div class="assign-grid">
+        <div>
+          <div class="field-label">Search student</div>
+          <div class="search-wrap">
+            <input class="field-input" id="studentSearch" placeholder="Name or email..." autocomplete="off" oninput="searchStudents()" style="margin-bottom:0;"/>
+            <div class="search-results" id="searchResults"></div>
+          </div>
+        </div>
+        <div>
+          <div class="field-label">Select club</div>
+          <select class="field-input" id="clubSelect" style="margin-bottom:0;"></select>
+        </div>
+      </div>
+      <div class="selected-chip" id="selectedChip">
+        <span id="selectedName">—</span>
+        <span class="chip-clear" onclick="clearStudent()">✕</span>
+      </div>
+      <button class="btn-assign" id="assignBtn" onclick="assignCoordinator()" disabled>Assign as coordinator</button>
+    </div>
+
+    <!-- CURRENT COORDINATORS -->
+    <div class="section-title">Current coordinators</div>
+    <div id="coordsList"></div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let allClubs = [], selectedUserId = null, selectedUserName = '';
+  const COLORS = ['#6366f1','#f472b6','#34d399','#fbbf24','#60a5fa','#a78bfa','#f87171'];
+  const avatarColor = name => COLORS[name.charCodeAt(0) % COLORS.length];
+
+  async function api(path, method='GET', body=null) {
+    const opts = { method, credentials:'include', headers:{'Content-Type':'application/json'} };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(path, opts);
+    return r.json();
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('adminEmail').value.trim();
+    const pass  = document.getElementById('adminPass').value;
+    const res   = await api('/api/admin/login', 'POST', { email, password: pass });
+    if (res.error) {
+      document.getElementById('loginErr').style.display = 'block'; return;
+    }
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainPanel').style.display   = 'block';
+    loadPanel();
+  }
+
+  async function doLogout() {
+    await api('/api/admin/logout', 'POST');
+    location.reload();
+  }
+
+  async function loadPanel() {
+    const [students, coords, clubs] = await Promise.all([
+      api('/api/admin/students'),
+      api('/api/admin/coordinators'),
+      api('/api/admin/clubs')
+    ]);
+    allClubs = clubs;
+    document.getElementById('statStudents').textContent = students.length;
+    document.getElementById('statCoords').textContent   = coords.length;
+    populateClubSelect(clubs);
+    renderCoordinators(coords);
+  }
+
+  function populateClubSelect(clubs) {
+    const sel = document.getElementById('clubSelect');
+    const cats = {};
+    clubs.forEach(c => { (cats[c.category] = cats[c.category]||[]).push(c); });
+    sel.innerHTML = '<option value="">— Choose a club —</option>';
+    Object.entries(cats).forEach(([cat, list]) => {
+      const grp = document.createElement('optgroup');
+      grp.label = cat;
+      list.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.id; o.textContent = `${c.emoji} ${c.name}`;
+        grp.appendChild(o);
+      });
+      sel.appendChild(grp);
+    });
+  }
+
+  let searchTimer;
+  function searchStudents() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(async () => {
+      const q = document.getElementById('studentSearch').value.trim();
+      if (!q) { document.getElementById('searchResults').classList.remove('show'); return; }
+      const students = await api(`/api/admin/students?q=${encodeURIComponent(q)}`);
+      const el = document.getElementById('searchResults');
+      if (!students.length) {
+        el.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--text-3);">No students found</div>';
+      } else {
+        el.innerHTML = students.map(s => `
+          <div class="sr-item" onclick="selectStudent(${s.id},'${s.name.replace(/'/g,"\\'")}','${s.email}')">
+            <div class="sr-av" style="background:${avatarColor(s.name)}22;color:${avatarColor(s.name)}">${s.name.charAt(0)}</div>
+            <div>
+              <div class="sr-name">${s.name} ${s.role==='coordinator'?'<span style="font-size:10px;color:var(--amber);">(coordinator)</span>':''}</div>
+              <div class="sr-email">${s.email}</div>
+            </div>
+          </div>`).join('');
+      }
+      el.classList.add('show');
+    }, 300);
+  }
+
+  function selectStudent(id, name, email) {
+    selectedUserId   = id;
+    selectedUserName = name;
+    document.getElementById('studentSearch').value = '';
+    document.getElementById('searchResults').classList.remove('show');
+    document.getElementById('selectedName').textContent = `${name} · ${email}`;
+    document.getElementById('selectedChip').classList.add('show');
+    checkAssignBtn();
+  }
+
+  function clearStudent() {
+    selectedUserId = null; selectedUserName = '';
+    document.getElementById('selectedChip').classList.remove('show');
+    checkAssignBtn();
+  }
+
+  function checkAssignBtn() {
+    const clubVal = document.getElementById('clubSelect').value;
+    document.getElementById('assignBtn').disabled = !(selectedUserId && clubVal);
+  }
+
+  document.addEventListener('click', e => {
+    if (!document.getElementById('studentSearch').contains(e.target))
+      document.getElementById('searchResults').classList.remove('show');
+  });
+
+  async function assignCoordinator() {
+    const club_id = parseInt(document.getElementById('clubSelect').value);
+    if (!selectedUserId || !club_id) return;
+    const res = await api('/api/admin/assign-coordinator', 'POST', { user_id: selectedUserId, club_id });
+    if (res.message) {
+      showToast(`${selectedUserName} is now a coordinator!`);
+      clearStudent();
+      document.getElementById('clubSelect').value = '';
+      checkAssignBtn();
+      loadPanel();
+    } else { showToast(res.error || 'Error'); }
+  }
+
+  function renderCoordinators(coords) {
+    const el = document.getElementById('coordsList');
+    if (!coords.length) {
+      el.innerHTML = '<div class="empty-state">No coordinators assigned yet</div>'; return;
+    }
+    el.innerHTML = coords.map(c => `
+      <div class="coord-card">
+        <div class="coord-avatar" style="background:${avatarColor(c.user_name)}22;color:${avatarColor(c.user_name)};border:1px solid ${avatarColor(c.user_name)}33">
+          ${c.user_name.charAt(0)}
+        </div>
+        <div class="coord-info">
+          <div class="coord-name">${c.user_name}</div>
+          <div class="coord-email">${c.email}</div>
+          <div class="coord-club"><span class="club-pill">${c.emoji} ${c.club_name}</span></div>
+        </div>
+        <button class="btn-remove" onclick="removeCoord(${c.user_id},${c.club_id},'${c.user_name.replace(/'/g,"\\'")}','${c.club_name.replace(/'/g,"\\'")}')">Remove</button>
+      </div>`).join('');
+  }
+
+  async function removeCoord(userId, clubId, name, club) {
+    if (!confirm(`Remove ${name} as coordinator of ${club}?`)) return;
+    const res = await api('/api/admin/remove-coordinator', 'POST', { user_id: userId, club_id: clubId });
+    if (res.message) { showToast(`${name} removed as coordinator`); loadPanel(); }
+    else showToast(res.error || 'Error');
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  document.getElementById('clubSelect').addEventListener('change', checkAssignBtn);
+
+  // auto-check if already logged in
+  api('/api/me').then(res => {
+    if (res.role === 'admin') {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainPanel').style.display   = 'block';
+      loadPanel();
+    }
+  });
+</script>
+</body>
+</html>

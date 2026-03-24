@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LNMIIT Connect — Coordinator</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0b0b0f; --bg-card:#13131c; --bg-input:#1a1a24; --bg-hover:#1e1e2a;
+      --border:rgba(255,255,255,0.07); --accent:#6366f1; --accent-g:rgba(99,102,241,0.2);
+      --accent2:#a5b4fc; --text-1:#eeeef5; --text-2:#8888a8; --text-3:#44445a;
+      --green:#34d399; --amber:#fbbf24; --red:#f87171; --r:14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text-1); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; min-height: 100dvh; }
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background: radial-gradient(ellipse 50% 40% at 15% 5%, rgba(99,102,241,0.1) 0%, transparent 70%);
+    }
+    .nav {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 20px; background:rgba(11,11,15,0.88);
+      backdrop-filter:blur(20px); border-bottom:1px solid var(--border);
+    }
+    .nav-logo { display:flex; align-items:center; gap:9px; }
+    .nav-icon {
+      width:34px; height:34px;
+      background:linear-gradient(135deg,var(--accent),#a78bfa);
+      border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px;
+    }
+    .nav-name { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; }
+    .nav-badge { font-size:10px; padding:2px 8px; border-radius:20px; background:rgba(251,191,36,0.15); color:var(--amber); border:1px solid rgba(251,191,36,0.25); margin-left:8px; }
+    .logout-btn {
+      font-size:12px; padding:6px 14px; border-radius:8px;
+      background:transparent; border:1px solid var(--border);
+      color:var(--text-2); cursor:pointer; transition:all 0.2s;
+    }
+    .logout-btn:hover { background:var(--bg-hover); color:var(--text-1); }
+    .switch-btn {
+      font-size:12px; padding:6px 14px; border-radius:8px;
+      background:var(--accent-g); border:1px solid rgba(99,102,241,0.3);
+      color:var(--accent2); cursor:pointer; transition:all 0.2s;
+    }
+    .switch-btn:hover { background:rgba(99,102,241,0.25); }
+
+    .page { position:relative; z-index:1; max-width:600px; margin:0 auto; padding:24px 16px 60px; }
+
+    .section-title { font-size:11px; font-weight:600; color:var(--text-3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    .club-selector {
+      display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px;
+    }
+    .club-chip {
+      padding:7px 14px; border-radius:20px; font-size:13px; font-weight:500;
+      background:var(--bg-card); border:1px solid var(--border);
+      cursor:pointer; transition:all 0.2s; color:var(--text-2);
+    }
+    .club-chip.active { background:var(--accent-g); border-color:rgba(99,102,241,0.4); color:var(--accent2); }
+
+    .tabs { display:flex; gap:4px; margin-bottom:16px; background:var(--bg-card); border-radius:10px; padding:4px; }
+    .tab {
+      flex:1; padding:8px; border-radius:7px; text-align:center;
+      font-size:13px; font-weight:500; cursor:pointer; color:var(--text-2); transition:all 0.2s;
+    }
+    .tab.active { background:var(--bg-hover); color:var(--text-1); }
+
+    .request-card {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r);
+      padding:14px 16px; margin-bottom:10px;
+      display:flex; align-items:center; gap:14px;
+    }
+    .req-avatar {
+      width:40px; height:40px; border-radius:12px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px; font-weight:700;
+    }
+    .req-info { flex:1; min-width:0; }
+    .req-name { font-size:14px; font-weight:500; }
+    .req-email { font-size:12px; color:var(--text-3); margin-top:2px; }
+    .req-time { font-size:11px; color:var(--text-3); margin-top:3px; }
+    .req-actions { display:flex; gap:8px; flex-shrink:0; }
+
+    .btn-approve {
+      padding:6px 14px; border-radius:8px; font-size:12px; font-weight:500;
+      background:rgba(52,211,153,0.12); color:var(--green);
+      border:1px solid rgba(52,211,153,0.25); cursor:pointer; transition:all 0.2s;
+    }
+    .btn-approve:hover { background:rgba(52,211,153,0.2); }
+    .btn-reject {
+      padding:6px 14px; border-radius:8px; font-size:12px; font-weight:500;
+      background:rgba(248,113,113,0.1); color:var(--red);
+      border:1px solid rgba(248,113,113,0.2); cursor:pointer; transition:all 0.2s;
+    }
+    .btn-reject:hover { background:rgba(248,113,113,0.18); }
+    .btn-remove {
+      padding:5px 12px; border-radius:8px; font-size:11px; font-weight:500;
+      background:transparent; color:var(--text-3);
+      border:1px solid var(--border); cursor:pointer; transition:all 0.2s;
+    }
+    .btn-remove:hover { background:rgba(248,113,113,0.1); color:var(--red); border-color:rgba(248,113,113,0.2); }
+
+    .empty-state { text-align:center; padding:40px 20px; color:var(--text-3); font-size:14px; }
+    .empty-icon { font-size:32px; margin-bottom:10px; }
+
+    .pending-badge {
+      display:inline-block; font-size:10px; padding:2px 8px; border-radius:20px;
+      background:rgba(251,191,36,0.12); color:var(--amber);
+      border:1px solid rgba(251,191,36,0.2); margin-left:6px;
+    }
+
+    .stats-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; }
+    .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--r); padding:16px; text-align:center; }
+    .stat-num { font-family:'Space Mono',monospace; font-size:24px; font-weight:700; }
+    .stat-lbl { font-size:11px; color:var(--text-3); margin-top:4px; }
+
+    .toast {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:var(--bg-card); border:1px solid var(--border); border-radius:10px;
+      padding:10px 20px; font-size:13px; z-index:999;
+      opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    .loading { text-align:center; padding:30px; color:var(--text-3); font-size:14px; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-icon">🔗</div>
+    <span class="nav-name">LNMIIT Connect</span>
+    <span class="nav-badge">Coordinator</span>
+  </div>
+  <div class="nav-right" style="display:flex;align-items:center;gap:8px;">
+    <button class="switch-btn" onclick="window.location.href='/dashboard.html'">⬅ Student View</button>
+    <div style="position:relative;">
+      <div class="logout-btn notif-bell" id="notifBell" onclick="toggleNotifPanel()" style="display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="notifBadge" style="display:none;background:#f87171;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;"></span>
+      </div>
+      <div id="notifPanel" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:280px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);z-index:300;box-shadow:0 16px 40px rgba(0,0,0,0.5);overflow:hidden;">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;justify-content:space-between;">
+          Notifications
+          <span style="font-size:11px;color:var(--accent2);cursor:pointer;font-weight:400;" onclick="clearNotifs()">Mark all read</span>
+        </div>
+        <div id="notifList"><div style="padding:24px;text-align:center;font-size:13px;color:var(--text-3);">No notifications</div></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div id="loadingState" class="loading">Loading your clubs...</div>
+  <div id="mainContent" style="display:none;">
+
+    <div class="section-title">Your clubs</div>
+    <div class="club-selector" id="clubSelector"></div>
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-num" id="statPending">0</div>
+        <div class="stat-lbl">Pending requests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statMembers">0</div>
+        <div class="stat-lbl">Approved members</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabPending" onclick="switchTab('pending')">
+        Pending requests <span id="pendingCount" class="pending-badge" style="display:none;"></span>
+      </div>
+      <div class="tab" id="tabMembers" onclick="switchTab('members')">Members</div>
+    </div>
+
+    <div id="pendingPanel"></div>
+    <div id="membersPanel" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let myClubs = [], activeClubId = null, currentTab = 'pending';
+
+  const COLORS = ['#6366f1','#f472b6','#34d399','#fbbf24','#60a5fa','#a78bfa','#f87171'];
+  function avatarColor(name) { return COLORS[name.charCodeAt(0) % COLORS.length]; }
+
+  async function api(path, method='GET', body=null) {
+    const opts = { method, credentials:'include', headers:{'Content-Type':'application/json'} };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(path, opts);
+    return r.json();
+  }
+
+  async function init() {
+    const me = await api('/api/me');
+    if (me.error || me.role === 'student') {
+      window.location.href = 'dashboard.html'; return;
+    }
+    myClubs = await api('/api/coordinator/clubs');
+    if (!myClubs.length) {
+      document.getElementById('loadingState').textContent = 'No clubs assigned to you yet.';
+      return;
+    }
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    renderClubSelector();
+    selectClub(myClubs[0].id);
+  }
+
+  function renderClubSelector() {
+    document.getElementById('clubSelector').innerHTML = myClubs.map(c =>
+      `<div class="club-chip" id="chip-${c.id}" onclick="selectClub(${c.id})">${c.emoji} ${c.name}</div>`
+    ).join('');
+  }
+
+  async function selectClub(id) {
+    activeClubId = id;
+    myClubs.forEach(c => document.getElementById('chip-'+c.id)?.classList.remove('active'));
+    document.getElementById('chip-'+id)?.classList.add('active');
+    await loadData();
+  }
+
+  async function loadData() {
+    const [requests, members] = await Promise.all([
+      api(`/api/coordinator/clubs/${activeClubId}/requests`),
+      api(`/api/coordinator/clubs/${activeClubId}/members`)
+    ]);
+    document.getElementById('statPending').textContent  = requests.length;
+    document.getElementById('statMembers').textContent  = members.length;
+    const badge = document.getElementById('pendingCount');
+    if (requests.length > 0) { badge.style.display='inline-block'; badge.textContent=requests.length; }
+    else { badge.style.display='none'; }
+    renderRequests(requests);
+    renderMembers(members);
+  }
+
+  function renderRequests(list) {
+    const el = document.getElementById('pendingPanel');
+    if (!list.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>No pending requests</div>`;
+      return;
+    }
+    el.innerHTML = list.map(r => `
+      <div class="request-card" id="req-${r.id}">
+        <div class="req-avatar" style="background:${avatarColor(r.name)}22;color:${avatarColor(r.name)};border:1px solid ${avatarColor(r.name)}33">
+          ${r.name.charAt(0).toUpperCase()}
+        </div>
+        <div class="req-info">
+          <div class="req-name">${r.name}</div>
+          <div class="req-email">${r.email}</div>
+          <div class="req-time">${new Date(r.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})}</div>
+        </div>
+        <div class="req-actions">
+          <button class="btn-approve" onclick="approveReq(${r.id})">Approve</button>
+          <button class="btn-reject"  onclick="rejectReq(${r.id})">Reject</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function renderMembers(list) {
+    const el = document.getElementById('membersPanel');
+    if (!list.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div>No members yet</div>`;
+      return;
+    }
+    el.innerHTML = list.map(m => `
+      <div class="request-card" id="mem-${m.user_id}">
+        <div class="req-avatar" style="background:${avatarColor(m.name)}22;color:${avatarColor(m.name)};border:1px solid ${avatarColor(m.name)}33">
+          ${m.name.charAt(0).toUpperCase()}
+        </div>
+        <div class="req-info">
+          <div class="req-name">${m.name}</div>
+          <div class="req-email">${m.email}</div>
+          <div class="req-time">Joined ${new Date(m.updated_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})}</div>
+        </div>
+        <div class="req-actions">
+          <button class="btn-remove" onclick="removeMember(${m.user_id},'${m.name}')">Remove</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function approveReq(reqId) {
+    const res = await api(`/api/coordinator/requests/${reqId}/approve`, 'POST');
+    if (res.message) { showToast('Approved! 🎉'); await loadData(); }
+    else showToast(res.error || 'Error');
+  }
+
+  async function rejectReq(reqId) {
+    const res = await api(`/api/coordinator/requests/${reqId}/reject`, 'POST');
+    if (res.message) { showToast('Request rejected'); await loadData(); }
+    else showToast(res.error || 'Error');
+  }
+
+  async function removeMember(userId, name) {
+    if (!confirm(`Remove ${name} from this club?`)) return;
+    const res = await api(`/api/coordinator/clubs/${activeClubId}/members/${userId}/remove`, 'POST');
+    if (res.message) { showToast(`${name} removed`); await loadData(); }
+    else showToast(res.error || 'Error');
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabPending').classList.toggle('active', tab==='pending');
+    document.getElementById('tabMembers').classList.toggle('active', tab==='members');
+    document.getElementById('pendingPanel').style.display  = tab==='pending'  ? 'block' : 'none';
+    document.getElementById('membersPanel').style.display  = tab==='members'  ? 'block' : 'none';
+  }
+
+  async function logout() {
+    await api('/api/logout', 'POST');
+    window.location.href = '/page1/index.html';
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  async function loadNotifications() {
+    const res = await api('/api/notifications');
+    if (!Array.isArray(res)) return;
+    const badge = document.getElementById('notifBadge');
+    const unread = res.filter(n => !n.is_read).length;
+    badge.textContent = unread > 9 ? '9+' : unread;
+    badge.style.display = unread > 0 ? 'inline' : 'none';
+    const list = document.getElementById('notifList');
+    if (!res.length) { list.innerHTML = '<div style="padding:24px;text-align:center;font-size:13px;color:var(--text-3);">No notifications</div>'; return; }
+    list.innerHTML = res.map(n => `
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5;${n.is_read?'':'background:rgba(99,102,241,0.05);'}">
+        <div>${n.message}</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:3px;">${new Date(n.created_at.replace(' ','T')+'Z').toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'})}</div>
+      </div>`).join('');
+  }
+
+  function toggleNotifPanel() {
+    const panel = document.getElementById('notifPanel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    if (panel.style.display === 'block') loadNotifications();
+  }
+
+  async function clearNotifs() {
+    await api('/api/notifications/read', 'POST');
+    document.getElementById('notifBadge').style.display = 'none';
+    loadNotifications();
+  }
+
+  document.addEventListener('click', e => {
+    const bell = document.getElementById('notifBell');
+    const panel = document.getElementById('notifPanel');
+    if (bell && panel && !bell.contains(e.target) && !panel.contains(e.target))
+      panel.style.display = 'none';
+  });
+
+  init();
+  setInterval(loadNotifications, 30000);
+  // auto refresh data every 10 seconds
+  setInterval(() => { if (activeClubId) loadData(); }, 10000);</script>
+</body>
+</html>
