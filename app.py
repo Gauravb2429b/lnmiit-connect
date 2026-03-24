@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 from datetime import datetime, timedelta
-import sqlite3, hashlib, random, string, smtplib, pytz
+import sqlite3, hashlib, random, string, smtplib, pytz,os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -929,7 +929,9 @@ def serve_static(filename):
 
 if __name__ == '__main__':
     init_db()
+
     print("\n LNMIIT Connect is running!")
-    print(" App:         http://127.0.0.1:5000/dashboard.html")
-    print(" Admin panel: http://127.0.0.1:5000/admin.html\n")
-    app.run(debug=True, port=5000, host='0.0.0.0')
+
+    port = int(os.environ.get("PORT", 5000))
+
+    app.run(host='0.0.0.0', port=port)
